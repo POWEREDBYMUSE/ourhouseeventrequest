@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit Your Event — Our House</title>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=DM+Mono:wght@300;400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --forest:   #0c3722;
+  --forest-d: #081f14;
+  --orange:   #e46114;
+  --orange-lt:#f07d38;
+  --amber:    #dc951b;
+  --cream:    #f5f4ef;
+  --surface:  rgba(245,244,239,0.06);
+  --border:   rgba(245,244,239,0.12);
+  --border-hi:rgba(245,244,239,0.28);
+  --muted:    rgba(245,244,239,0.42);
+  --dim:      rgba(245,244,239,0.22);
+  --warn:     #e07a5f;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+
+body {
+  font-family:'DM Mono',monospace;
+  background:var(--forest-d);
+  color:var(--cream);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body::after {
+  content:''; position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; z-index:0;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background:var(--forest-d);
+  border-bottom:1px solid var(--border);
+  padding:0 40px;
+  display:flex; align-items:center; justify-content:space-between;
+  min-height:52px; position:relative; z-index:10;
+}
+.topbar::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--orange), var(--amber), transparent 70%);
+}
+.tb-brand { font-family:'Gloock',serif; font-size:14px; letter-spacing:.1em; color:var(--cream); }
+.tb-tag   { font-size:9px; letter-spacing:.3em; text-transform:uppercase; color:var(--muted); }
+
+/* ── HERO ── */
+.hero {
+  background:var(--forest);
+  padding:64px 40px 56px;
+  text-align:center;
+  position:relative; overflow:hidden; z-index:1;
+}
+.hero::before {
+  content:'POWEREDBYMUSE';
+  position:absolute; font-family:'Gloock',serif; font-size:100px;
+  color:rgba(245,244,239,.025); top:50%; left:50%;
+  transform:translate(-50%,-50%); white-space:nowrap; letter-spacing:.2em;
+  pointer-events:none;
+}
+.hero::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--amber), transparent);
+}
+.eyebrow {
+  font-size:9px; letter-spacing:.4em; text-transform:uppercase;
+  color:var(--orange); margin-bottom:18px;
+  opacity:0; animation:up .6s .1s forwards;
+}
+.hero h1 {
+  font-family:'Gloock',serif;
+  font-size:clamp(36px,6vw,72px);
+  font-weight:400; line-height:1.06; letter-spacing:-.02em;
+  color:var(--cream); margin-bottom:18px;
+  opacity:0; animation:up .7s .2s forwards;
+}
+.hero h1 em { font-style:italic; color:rgba(245,244,239,.42); }
+.hero-sub {
+  font-family:'Gloock',serif; font-style:italic;
+  font-size:clamp(13px,1.8vw,16px); color:var(--muted);
+  max-width:500px; margin:0 auto;
+  opacity:0; animation:up .7s .3s forwards; line-height:1.7;
+}
+
+/* ── WRAP ── */
+.wrap { max-width:780px; margin:0 auto; padding:40px 24px 80px; position:relative; z-index:1; }
+
+/* ── PROGRESS ── */
+.progress-bar {
+  display:flex; gap:0; margin-bottom:40px;
+  opacity:0; animation:up .6s .45s forwards;
+}
+.step {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+  position:relative; cursor:default;
+}
+.step:not(:last-child)::after {
+  content:''; position:absolute; top:14px; left:50%; width:100%; height:1px;
+  background:var(--border); z-index:0;
+}
+.step.done:not(:last-child)::after { background:var(--orange); }
+.step-dot {
+  width:28px; height:28px; border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--forest-d);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; letter-spacing:.05em; color:var(--muted);
+  position:relative; z-index:1; transition:all .3s;
+}
+.step.active .step-dot { border-color:var(--orange); color:var(--orange); background:rgba(228,97,20,.1); }
+.step.done .step-dot   { border-color:var(--orange); background:var(--orange); color:var(--cream); }
+.step-lbl { font-size:8px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); text-align:center; transition:color .3s; }
+.step.active .step-lbl { color:var(--cream); }
+.step.done .step-lbl   { color:var(--orange); }
+
+/* ── CARDS ── */
+.section {
+  display:none;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; position:relative; overflow:hidden;
+  margin-bottom:3px;
+}
+.section.active { display:block; animation:up .45s forwards; }
+.section::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--orange), var(--amber), transparent 60%);
+}
+.section-inner { padding:36px 40px; }
+.section-hd { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+.section-num  { font-family:'Gloock',serif; font-size:11px; letter-spacing:.18em; color:var(--orange); }
+.section-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--cream); }
+.section-rule { flex:1; height:1px; background:var(--border); }
+
+/* ── FIELDS ── */
+.field-grid { display:grid; gap:20px; }
+.field-grid.two { grid-template-columns:1fr 1fr; }
+.field-grid.three { grid-template-columns:1fr 1fr 1fr; }
+
+.fg { display:flex; flex-direction:column; gap:7px; }
+.fl {
+  font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted); display:flex; align-items:center; gap:6px;
+}
+.fl .req { color:var(--orange); font-size:11px; line-height:1; }
+.fi, .fs, .ft {
+  background:rgba(245,244,239,.06); border:1px solid var(--border);
+  color:var(--cream); font-family:'DM Mono',monospace; font-size:14px;
+  padding:12px 14px; outline:none; width:100%; transition:all .2s;
+  border-radius:8px;
+}
+.fi:focus, .fs:focus, .ft:focus {
+  border-color:var(--orange); background:rgba(228,97,20,.07);
+}
+.fi::placeholder, .ft::placeholder { color:var(--dim); }
+.fs { cursor:pointer; }
+.fs option { background:#0c3722; color:var(--cream); }
+.ft { resize:vertical; min-height:100px; line-height:1.6; font-size:13px; }
+.fh { font-size:9px; letter-spacing:.07em; color:var(--muted); line-height:1.5; }
+.fi.err, .fs.err, .ft.err { border-color:rgba(224,122,95,.6); background:rgba(224,122,95,.05); }
+
+/* ── MEMBER TOGGLE ── */
+.tog-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:15px 18px; border:1px solid var(--border);
+  cursor:pointer; user-select:none; transition:all .2s; border-radius:12px;
+}
+.tog-row:hover { border-color:rgba(228,97,20,.4); background:rgba(228,97,20,.05); }
+.tog-lbl strong { display:block; font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--cream); margin-bottom:3px; }
+.tog-lbl small  { font-size:10px; color:var(--muted); letter-spacing:.07em; }
+.knob { width:42px; height:23px; background:rgba(245,244,239,.15); border-radius:12px; position:relative; transition:background .25s; flex-shrink:0; }
+.knob.on { background:var(--orange); }
+.knob::after { content:''; position:absolute; width:17px; height:17px; background:var(--cream); border-radius:50%; top:3px; left:3px; transition:transform .25s; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+.knob.on::after { transform:translateX(19px); }
+
+/* ── MEMBER BANNER ── */
+.mem-banner {
+  background:rgba(220,149,27,.09); border:1px solid rgba(220,149,27,.3);
+  border-left:3px solid var(--amber); border-radius:10px; padding:12px 16px;
+  animation:up .3s forwards;
+}
+.mem-banner-inner { display:flex; align-items:center; gap:12px; }
+.mem-banner-icon { font-size:18px; color:var(--amber); flex-shrink:0; }
+.mem-banner-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--amber); margin-bottom:2px; }
+.mem-banner-sub { font-size:9px; letter-spacing:.08em; color:var(--muted); line-height:1.5; }
+
+/* ── RADIO CARDS ── */
+.radio-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.rc {
+  border:1px solid var(--border); padding:16px 18px;
+  cursor:pointer; transition:all .2s; background:transparent;
+  border-radius:12px; position:relative;
+}
+.rc:hover { border-color:rgba(228,97,20,.4); background:rgba(228,97,20,.04); }
+.rc.sel   { border-color:var(--orange); background:rgba(228,97,20,.08); }
+.rc::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:var(--orange); transform:scaleX(0); transition:transform .25s;
+  border-radius:0 0 12px 12px;
+}
+.rc.sel::after { transform:scaleX(1); }
+.rc-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:.04em; color:var(--cream); margin-bottom:3px; }
+.rc-sub   { font-size:9px; color:var(--muted); letter-spacing:.06em; line-height:1.5; }
+.rc-badge {
+  display:inline-block; font-size:8px; letter-spacing:.12em; text-transform:uppercase;
+  padding:2px 7px; border-radius:999px; margin-top:6px;
+}
+.rc-badge.rs { color:var(--orange); border:1px solid rgba(228,97,20,.35); background:rgba(228,97,20,.08); }
+.rc-badge.hr { color:var(--amber);  border:1px solid rgba(220,149,27,.35); background:rgba(220,149,27,.08); }
+.rc-badge.mem{ color:var(--amber);  border:1px solid rgba(220,149,27,.35); background:rgba(220,149,27,.08); }
+
+/* ── ROOM CARDS ── */
+.room-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.room-c {
+  border:1px solid var(--border); padding:16px 14px;
+  cursor:pointer; transition:all .2s; background:transparent;
+  border-radius:12px; position:relative; overflow:hidden;
+}
+.room-c::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:var(--orange); transform:scaleX(0); transition:transform .25s;
+}
+.room-c:hover  { border-color:rgba(228,97,20,.4); background:rgba(228,97,20,.05); }
+.room-c.sel    { border-color:var(--orange); background:rgba(228,97,20,.08); }
+.room-c.sel::after { transform:scaleX(1); }
+.rm-name { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:.05em; color:var(--cream); margin-bottom:3px; }
+.rm-rate { font-family:'Gloock',serif; font-size:22px; line-height:1.1; color:var(--cream); margin-bottom:4px; }
+.rm-rate sub { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; }
+.rm-cap  { font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.rm-desc { font-size:9px; letter-spacing:.04em; color:var(--muted); line-height:1.5; }
+
+/* ── CALLOUT ── */
+.callout {
+  padding:14px 18px; border-radius:10px;
+  background:rgba(220,149,27,.07); border:1px solid rgba(220,149,27,.2);
+  border-left:3px solid var(--amber);
+  font-size:10px; letter-spacing:.07em; color:var(--cream); line-height:1.65;
+}
+.callout a { color:var(--amber); text-decoration:none; }
+.callout a:hover { text-decoration:underline; }
+
+/* ── NAV BUTTONS ── */
+.nav-row {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:32px; padding-top:24px; border-top:1px solid var(--border);
+}
+.btn-back {
+  background:transparent; border:1px solid var(--border);
+  color:var(--muted); font-family:'DM Mono',monospace;
+  font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  padding:12px 22px; cursor:pointer; transition:all .2s; border-radius:8px;
+}
+.btn-back:hover { border-color:var(--border-hi); color:var(--cream); }
+.btn-next {
+  background:var(--orange); color:var(--cream); border:none;
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em;
+  text-transform:uppercase; padding:14px 28px; cursor:pointer;
+  transition:all .2s; border-radius:8px;
+}
+.btn-next:hover { background:var(--orange-lt); transform:translateY(-1px); }
+.btn-next:disabled { opacity:.45; cursor:default; transform:none; }
+.step-hint { font-size:9px; letter-spacing:.12em; color:var(--muted); }
+
+/* ── SUBMIT BUTTON ── */
+.btn-submit {
+  background:var(--orange); color:var(--cream); border:none;
+  font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; padding:18px 40px; cursor:pointer;
+  transition:all .2s; border-radius:8px; width:100%; margin-top:28px;
+  position:relative;
+}
+.btn-submit:hover { background:var(--orange-lt); transform:translateY(-1px); }
+.btn-submit:disabled { opacity:.45; cursor:default; transform:none; }
+
+/* ── FINANCIAL SUMMARY ── */
+.fin-summary {
+  background:rgba(12,55,34,0.5);
+  border:1px solid rgba(228,97,20,0.35);
+  border-left:3px solid var(--orange);
+  border-radius:12px; padding:20px 22px; margin-bottom:16px;
+}
+.fin-summary-hd {
+  display:flex; align-items:flex-start; gap:12px; margin-bottom:16px;
+}
+.fin-summary-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+.fin-summary-title {
+  font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--cream); margin-bottom:3px;
+}
+.fin-summary-sub { font-size:9px; letter-spacing:.07em; color:var(--muted); line-height:1.6; }
+.fin-summary-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;
+}
+.fin-metric {
+  background:rgba(245,244,239,0.05); border:1px solid var(--border);
+  border-radius:8px; padding:12px 14px;
+}
+.fin-metric-lbl { font-size:8px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.fin-metric-val {
+  font-family:'Gloock',serif; font-size:22px; color:var(--cream);
+  line-height:1.1; margin-bottom:4px;
+}
+.fin-metric-val.fin-waived { color:var(--amber); font-size:18px; }
+.fin-metric-val.fin-good   { color:#5ec47a; }
+.fin-metric-sub { font-size:8px; letter-spacing:.06em; color:var(--muted); line-height:1.5; }
+.fin-note {
+  font-size:9px; letter-spacing:.07em; color:var(--muted);
+  line-height:1.65; border-top:1px solid var(--border); padding-top:10px;
+}
+
+/* ── REVIEW SECTION ── */
+.review-grid { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-bottom:16px; }
+.rv-block {
+  background:rgba(245,244,239,.04); border:1px solid var(--border);
+  padding:14px 16px; border-radius:10px;
+}
+.rv-lbl { font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+.rv-val { font-size:12px; color:var(--cream); line-height:1.5; }
+.rv-val.empty { color:var(--dim); font-style:italic; }
+.review-edit {
+  font-size:9px; letter-spacing:.12em; color:var(--orange);
+  cursor:pointer; text-decoration:none; text-transform:uppercase;
+  float:right; margin-top:-2px;
+}
+.review-edit:hover { text-decoration:underline; }
+
+/* ── SUCCESS ── */
+.success-wrap {
+  display:none; text-align:center; padding:60px 40px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; position:relative; overflow:hidden;
+}
+.success-wrap::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, var(--orange), var(--amber));
+}
+.success-wrap.show { display:block; animation:up .5s forwards; }
+.success-icon {
+  width:56px; height:56px; border-radius:50%;
+  background:rgba(228,97,20,.12); border:1px solid rgba(228,97,20,.35);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 20px; font-size:22px;
+}
+.success-title { font-family:'Gloock',serif; font-size:28px; color:var(--cream); margin-bottom:10px; line-height:1.2; }
+.success-sub   { font-size:11px; color:var(--muted); letter-spacing:.07em; line-height:1.7; max-width:440px; margin:0 auto; }
+.success-steps {
+  margin-top:28px; display:flex; flex-direction:column; gap:8px;
+  text-align:left; max-width:380px; margin-left:auto; margin-right:auto;
+}
+.success-step {
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:10px; letter-spacing:.07em; color:var(--muted); line-height:1.6;
+}
+.success-step-icon { color:var(--orange); flex-shrink:0; margin-top:1px; }
+
+/* ── FOOTER ── */
+.footer {
+  text-align:center; padding:32px 24px 48px;
+  border-top:1px solid var(--border); margin-top:3px;
+  position:relative; z-index:1;
+}
+.footer-logo { font-family:'Gloock',serif; font-size:13px; letter-spacing:.45em; text-transform:uppercase; color:var(--muted); }
+.footer-line  { width:40px; height:1px; background:linear-gradient(90deg,var(--orange),var(--amber)); margin:10px auto 0; }
+
+@keyframes up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+@media(max-width:640px){
+  .topbar { padding:0 16px; }
+  .section-inner { padding:24px 20px; }
+  .field-grid.two, .field-grid.three { grid-template-columns:1fr; }
+  .radio-grid { grid-template-columns:1fr; }
+  .room-grid  { grid-template-columns:1fr; }
+  .review-grid { grid-template-columns:1fr; }
+  .nav-row { flex-direction:column-reverse; gap:10px; }
+  .btn-next, .btn-back { width:100%; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-brand">Our House</div>
+  <div class="tb-tag">POWEREDBYMUSE &nbsp;·&nbsp; South LA</div>
+</div>
+
+<div class="hero">
+  <p class="eyebrow">Event Booking Request</p>
+  <h1>Let's build<br><em>something real.</em></h1>
+  <p class="hero-sub">Fill out the form below. We review every request and respond within 48 hours.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progress-bar">
+    <div class="step active" id="s-dot-1">
+      <div class="step-dot">01</div>
+      <div class="step-lbl">You</div>
+    </div>
+    <div class="step" id="s-dot-2">
+      <div class="step-dot">02</div>
+      <div class="step-lbl">Event</div>
+    </div>
+    <div class="step" id="s-dot-3">
+      <div class="step-dot">03</div>
+      <div class="step-lbl">Space</div>
+    </div>
+    <div class="step" id="s-dot-4">
+      <div class="step-dot">04</div>
+      <div class="step-lbl">Numbers</div>
+    </div>
+    <div class="step" id="s-dot-5">
+      <div class="step-dot">05</div>
+      <div class="step-lbl">Background</div>
+    </div>
+    <div class="step" id="s-dot-6">
+      <div class="step-dot">06</div>
+      <div class="step-lbl">Review</div>
+    </div>
+  </div>
+
+  <!-- ── STEP 1: YOU ─────────────────────────────────────────── -->
+  <div class="section active" id="sec-1">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">01 /</span>
+        <span class="section-title">About You</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="field-grid two">
+        <div class="fg">
+          <label class="fl">First &amp; Last Name <span class="req">*</span></label>
+          <input type="text" class="fi" id="f-name" placeholder="Your full name">
+        </div>
+        <div class="fg">
+          <label class="fl">Email Address <span class="req">*</span></label>
+          <input type="email" class="fi" id="f-email" placeholder="your@email.com">
+        </div>
+        <div class="fg">
+          <label class="fl">Phone Number <span class="req">*</span></label>
+          <input type="tel" class="fi" id="f-phone" placeholder="(323) 000-0000">
+        </div>
+        <div class="fg">
+          <label class="fl">Instagram Handle</label>
+          <input type="text" class="fi" id="f-ig" placeholder="@yourhandle">
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <span class="step-hint">Step 1 of 6</span>
+        <button class="btn-next" onclick="goTo(2)">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: EVENT ───────────────────────────────────────── -->
+  <div class="section" id="sec-2">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">02 /</span>
+        <span class="section-title">Your Event</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="field-grid" style="gap:20px;">
+        <div class="fg">
+          <label class="fl">Event Name <span class="req">*</span></label>
+          <input type="text" class="fi" id="f-event-name" placeholder="What's it called?">
+        </div>
+
+        <div class="fg">
+          <label class="fl">Event Concept <span class="req">*</span></label>
+          <textarea class="ft" id="f-concept" placeholder="Describe the vibe, the audience, and the purpose. Who is this for? What's the experience? Why Our House?" style="min-height:120px;"></textarea>
+          <p class="fh">Be specific — vague concepts slow down review. See the Booking Submission Guide for examples.</p>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Event Type <span class="req">*</span></label>
+          <div class="radio-grid">
+            <div class="rc" onclick="pickType('pop-up',this)">
+              <div class="rc-title">Pop-Up / Market</div>
+              <div class="rc-sub">Vendor showcase, art market, maker fair</div>
+            </div>
+            <div class="rc" onclick="pickType('workshop',this)">
+              <div class="rc-title">Workshop / Class</div>
+              <div class="rc-sub">Skill-based, educational, intimate</div>
+            </div>
+            <div class="rc" onclick="pickType('panel',this)">
+              <div class="rc-title">Panel / Talk</div>
+              <div class="rc-sub">Speaker series, community discussion</div>
+            </div>
+            <div class="rc" onclick="pickType('party',this)">
+              <div class="rc-title">Social / Listening Party</div>
+              <div class="rc-sub">Music-forward, networking, celebration</div>
+            </div>
+            <div class="rc" onclick="pickType('showcase',this)">
+              <div class="rc-title">Creative Showcase</div>
+              <div class="rc-sub">Art show, film screening, performance</div>
+            </div>
+            <div class="rc" onclick="pickType('other',this)">
+              <div class="rc-title">Other</div>
+              <div class="rc-sub">Something different — describe it above</div>
+            </div>
+          </div>
+          <input type="hidden" id="f-type" value="">
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goTo(1)">← Back</button>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="step-hint">Step 2 of 6</span>
+          <button class="btn-next" onclick="goTo(3)">Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: SPACE ───────────────────────────────────────── -->
+  <div class="section" id="sec-3">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">03 /</span>
+        <span class="section-title">Space &amp; Time</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="field-grid" style="gap:20px;">
+        <div class="fg">
+          <label class="fl">Preferred Room <span class="req">*</span></label>
+          <div class="room-grid">
+            <div class="room-c" onclick="pickRoom('Creative Suite',this)">
+              <div class="rm-name">Creative Suite</div>
+              <div class="rm-rate">$60<sub>/hr</sub></div>
+              <div class="rm-cap">⬡ Max 20 guests</div>
+              <div class="rm-desc">Intimate studio<br>Workshops &amp; small events</div>
+            </div>
+            <div class="room-c" onclick="pickRoom('The Loft',this)">
+              <div class="rm-name">The Loft</div>
+              <div class="rm-rate">$80<sub>/hr</sub></div>
+              <div class="rm-cap">⬡ Max 30 guests</div>
+              <div class="rm-desc">Open-concept floor<br>Panels &amp; mid-size events</div>
+            </div>
+            <div class="room-c" onclick="pickRoom('Full House',this)">
+              <div class="rm-name">Full House</div>
+              <div class="rm-rate">$150<sub>/hr</sub></div>
+              <div class="rm-cap">⬡ Max 60 guests</div>
+              <div class="rm-desc">Full venue access<br>Large events &amp; showcases</div>
+            </div>
+          </div>
+          <input type="hidden" id="f-room" value="">
+        </div>
+
+        <div class="field-grid two">
+          <div class="fg">
+            <label class="fl">Preferred Date <span class="req">*</span></label>
+            <input type="date" class="fi" id="f-date">
+          </div>
+          <div class="fg">
+            <label class="fl">Alternate Date</label>
+            <input type="date" class="fi" id="f-date2">
+          </div>
+          <div class="fg">
+            <label class="fl">Event Start Time <span class="req">*</span></label>
+            <input type="time" class="fi" id="f-start">
+          </div>
+          <div class="fg">
+            <label class="fl">Event End Time <span class="req">*</span></label>
+            <input type="time" class="fi" id="f-end">
+          </div>
+        </div>
+
+        <div class="callout">
+          ✓ <strong>30 minutes of setup and 30 minutes of breakdown are included free</strong> with every booking. Only select extra time below if you need more than that — extra time is billed at your room rate.
+        </div>
+
+        <div class="field-grid two">
+          <div class="fg">
+            <label class="fl">Extra Setup Time</label>
+            <select class="fs" id="f-setup">
+              <option value="0">None (using free 30 min)</option>
+              <option value="0.5">+30 min extra</option>
+              <option value="1">+1 hour extra</option>
+              <option value="1.5">+1.5 hours extra</option>
+            </select>
+            <p class="fh">First 30 min free — billed after that.</p>
+          </div>
+          <div class="fg">
+            <label class="fl">Extra Breakdown Time</label>
+            <select class="fs" id="f-bkdn">
+              <option value="0">None (using free 30 min)</option>
+              <option value="0.5">+30 min extra</option>
+              <option value="1">+1 hour extra</option>
+            </select>
+            <p class="fh">First 30 min free — billed after that.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          💡 Extra setup/breakdown is billed at your room rate and affects your deposit. <a href="https://poweredbymuse.github.io/ourhousecalculator/" target="_blank">Run the calculator</a> to see your full projected take-home.
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goTo(2)">← Back</button>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="step-hint">Step 3 of 6</span>
+          <button class="btn-next" onclick="goTo(4)">Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 4: NUMBERS ─────────────────────────────────────── -->
+  <div class="section" id="sec-4">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">04 /</span>
+        <span class="section-title">Your Numbers</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="field-grid" style="gap:20px;">
+
+        <!-- Member toggle -->
+        <div class="tog-row" onclick="toggleMember()" id="mem-toggle">
+          <div class="tog-lbl">
+            <strong>Our House Member</strong>
+            <small>Members get deposit waived on Revenue Share + 20% off Hourly rate</small>
+          </div>
+          <div class="knob" id="mem-knob"></div>
+        </div>
+
+        <!-- Member benefit banner -->
+        <div class="mem-banner" id="mem-banner" style="display:none;">
+          <div class="mem-banner-inner">
+            <span class="mem-banner-icon">★</span>
+            <div>
+              <div class="mem-banner-title">Member Benefits Applied</div>
+              <div class="mem-banner-sub" id="mem-banner-sub">Revenue Share deposit waived · Hourly rate 20% off</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Booking Model <span class="req">*</span></label>
+          <div class="radio-grid" id="model-cards">
+            <div class="rc" id="mc-rs" onclick="pickModelCard('rs',this)">
+              <div class="rc-title">Revenue Share</div>
+              <div class="rc-sub" id="rs-sub">Our House takes 60% up to a cap. You keep everything above it.</div>
+              <span class="rc-badge" id="rs-badge">Non-Member · 30% deposit</span>
+            </div>
+            <div class="rc" id="mc-hr" onclick="pickModelCard('hr',this)">
+              <div class="rc-title">Standard Hourly</div>
+              <div class="rc-sub" id="hr-sub">Flat room rate. Keep 100% of ticket sales above the room cost.</div>
+              <span class="rc-badge" id="hr-badge">Non-Member · 50% deposit</span>
+            </div>
+          </div>
+          <input type="hidden" id="f-model" value="">
+        </div>
+
+        <div class="field-grid two">
+          <div class="fg">
+            <label class="fl">Expected Attendance <span class="req">*</span></label>
+            <input type="number" class="fi" id="f-attendance" placeholder="e.g. 35" min="1">
+            <p class="fh" id="att-hint">Select a room first to set the capacity limit.</p>
+          </div>
+          <div class="fg">
+            <label class="fl">Ticket Price <span class="req">*</span></label>
+            <div style="position:relative;">
+              <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;">$</span>
+              <input type="number" class="fi" id="f-price" placeholder="e.g. 35" min="0" style="padding-left:26px;">
+            </div>
+            <p class="fh">Minimum $30 for Revenue Share. Enter 0 for free events.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          💡 Not sure which model works for your numbers? <a href="https://poweredbymuse.github.io/ourhousecalculator/" target="_blank">Run the Our House calculator</a> — see your take-home, breakeven, and deposit for both models side by side.
+        </div>
+
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goTo(3)">← Back</button>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="step-hint">Step 4 of 6</span>
+          <button class="btn-next" onclick="goTo(5)">Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 5: BACKGROUND ──────────────────────────────────── -->
+  <div class="section" id="sec-5">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">05 /</span>
+        <span class="section-title">Your Background</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="field-grid" style="gap:20px;">
+
+        <div class="fg">
+          <label class="fl">Past Hosting Experience</label>
+          <textarea class="ft" id="f-experience" placeholder="Describe any events you've hosted, organized, or co-produced. Include rough attendance, venue, and outcomes. If you're newer to hosting, tell us about your community presence instead."></textarea>
+        </div>
+
+        <div class="field-grid two">
+          <div class="fg">
+            <label class="fl">Website or Portfolio</label>
+            <input type="url" class="fi" id="f-website" placeholder="https://yoursite.com">
+          </div>
+          <div class="fg">
+            <label class="fl">Other Social / Press Links</label>
+            <input type="text" class="fi" id="f-links" placeholder="TikTok, Twitter, press, etc.">
+          </div>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Promotion Plan <span class="req">*</span></label>
+          <textarea class="ft" id="f-promo" placeholder="How are you driving ticket sales independently? What channels, audience size, and tactics are you using?"></textarea>
+          <p class="fh">We don't market your event for you — tell us how you plan to fill the room.</p>
+        </div>
+
+        <div class="fg">
+          <label class="fl">How did you hear about Our House? <span class="req">*</span></label>
+          <select class="fs" id="f-source">
+            <option value="">Select one</option>
+            <option>Instagram</option>
+            <option>Word of mouth / referral</option>
+            <option>Attended a previous event</option>
+            <option>Google / web search</option>
+            <option>Flyer or in-person</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="fg">
+          <label class="fl">Anything else we should know?</label>
+          <textarea class="ft" id="f-notes" placeholder="Special requests, collaborator names, accessibility needs, or anything else relevant to your event." style="min-height:80px;"></textarea>
+        </div>
+
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goTo(4)">← Back</button>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span class="step-hint">Step 5 of 6</span>
+          <button class="btn-next" onclick="goTo(6)">Review Request →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 6: REVIEW ──────────────────────────────────────── -->
+  <div class="section" id="sec-6">
+    <div class="section-inner">
+      <div class="section-hd">
+        <span class="section-num">06 /</span>
+        <span class="section-title">Review &amp; Submit</span>
+        <div class="section-rule"></div>
+      </div>
+
+      <p style="font-size:10px;color:var(--muted);letter-spacing:.08em;line-height:1.7;margin-bottom:24px;">
+        Review your details before submitting. We respond within 48 hours. If anything needs updating, click Edit to go back.
+      </p>
+
+      <!-- Review blocks filled by JS -->
+      <div id="review-content"></div>
+
+      <div class="callout" style="margin-top:8px;">
+        By submitting this request you agree to be contacted by Our House / POWEREDBYMUSE regarding your event. Submitting a request does not guarantee a booking — all requests are reviewed before confirmation.
+      </div>
+
+      <button class="btn-submit" id="submit-btn" onclick="submitForm()">
+        Submit Event Request →
+      </button>
+
+      <div class="nav-row" style="border:none;margin-top:16px;padding-top:0;">
+        <button class="btn-back" onclick="goTo(5)">← Edit Request</button>
+        <span class="step-hint">Step 6 of 6</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUCCESS ─────────────────────────────────────────────── -->
+  <div class="success-wrap" id="success-wrap">
+    <div class="success-icon">✓</div>
+    <h2 class="success-title" id="success-title">Request received.</h2>
+    <p class="success-sub" id="success-sub">
+      We'll review your submission and respond within 48 hours at the email you provided.
+    </p>
+    <div class="success-steps">
+      <div class="success-step">
+        <span class="success-step-icon">→</span>
+        Check your inbox — a confirmation is on its way.
+      </div>
+      <div class="success-step">
+        <span class="success-step-icon">→</span>
+        We review every request before confirming. We may follow up with questions.
+      </div>
+      <div class="success-step">
+        <span class="success-step-icon">→</span>
+        Once approved, you'll receive a booking confirmation and deposit invoice.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p class="footer-logo">Our House · POWEREDBYMUSE</p>
+  <div class="footer-line"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let currentStep = 1;
+const totalSteps = 6;
+const state = {
+  name:'', email:'', phone:'', ig:'',
+  eventName:'', concept:'', type:'',
+  room:'', date:'', date2:'', start:'', end:'', setup:'', bkdn:'',
+  model:'', attendance:'', price:'',
+  experience:'', website:'', links:'', promo:'', source:'', notes:''
+};
+
+// ── Navigation ─────────────────────────────────────────────────
+function goTo(step) {
+  if(step > currentStep && !validate(currentStep)) return;
+
+  // Save current fields
+  saveStep(currentStep);
+
+  // Update progress dots
+  for(let i=1; i<=totalSteps; i++){
+    const dot = document.getElementById('s-dot-'+i);
+    dot.classList.remove('active','done');
+    if(i < step)  dot.classList.add('done');
+    if(i === step) dot.classList.add('active');
+  }
+
+  document.getElementById('sec-'+currentStep).classList.remove('active');
+  currentStep = step;
+  document.getElementById('sec-'+currentStep).classList.add('active');
+
+  if(step === 6) buildReview();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── Save ───────────────────────────────────────────────────────
+function saveStep(s) {
+  const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+  if(s===1){ state.name=g('f-name'); state.email=g('f-email'); state.phone=g('f-phone'); state.ig=g('f-ig'); }
+  if(s===2){ state.eventName=g('f-event-name'); state.concept=g('f-concept'); }
+  if(s===3){ state.date=g('f-date'); state.date2=g('f-date2'); state.start=g('f-start'); state.end=g('f-end'); state.setup=g('f-setup'); state.bkdn=g('f-bkdn'); }
+  if(s===4){ state.attendance=g('f-attendance'); state.price=g('f-price'); state.isMember=isMember; }
+  if(s===5){ state.experience=g('f-experience'); state.website=g('f-website'); state.links=g('f-links'); state.promo=g('f-promo'); state.source=g('f-source'); state.notes=g('f-notes'); }
+}
+
+// ── Validate ───────────────────────────────────────────────────
+function validate(s) {
+  let ok = true;
+  const req = (id, val) => {
+    const el = document.getElementById(id);
+    if(!val){ if(el){ el.classList.add('err'); el.focus(); } ok=false; }
+    else { if(el) el.classList.remove('err'); }
+  };
+  if(s===1){
+    req('f-name',  document.getElementById('f-name').value.trim());
+    req('f-email', document.getElementById('f-email').value.trim());
+    req('f-phone', document.getElementById('f-phone').value.trim());
+  }
+  if(s===2){
+    req('f-event-name', document.getElementById('f-event-name').value.trim());
+    req('f-concept',    document.getElementById('f-concept').value.trim());
+    if(!state.type){ ok=false; }
+  }
+  if(s===3){
+    if(!state.room){ ok=false; }
+    req('f-date',  document.getElementById('f-date').value);
+    req('f-start', document.getElementById('f-start').value);
+    req('f-end',   document.getElementById('f-end').value);
+  }
+  if(s===4){
+    if(!selectedModelCard){ ok=false; }
+    req('f-attendance', document.getElementById('f-attendance').value);
+    req('f-price',      document.getElementById('f-price').value);
+  }
+  if(s===5){
+    req('f-promo',  document.getElementById('f-promo').value.trim());
+    req('f-source', document.getElementById('f-source').value);
+  }
+  return ok;
+}
+
+// ── Pickers ────────────────────────────────────────────────────
+function pickType(val, el){
+  document.querySelectorAll('.radio-grid .rc').forEach(c => {
+    if(c.closest('#sec-2')) c.classList.remove('sel');
+  });
+  el.classList.add('sel');
+  state.type = val;
+}
+function pickRoom(val, el){
+  document.querySelectorAll('.room-c').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  state.room = val;
+  document.getElementById('f-room').value = val;
+  updateAttendanceCap();
+}
+// Member state
+let isMember = false;
+let selectedModelCard = null; // 'rs' or 'hr'
+
+const ROOM_CAPS = { 'Creative Suite': 20, 'The Loft': 30, 'Full House': 60 };
+
+function toggleMember(){
+  isMember = !isMember;
+  document.getElementById('mem-knob').classList.toggle('on', isMember);
+  const banner = document.getElementById('mem-banner');
+  banner.style.display = isMember ? 'block' : 'none';
+  updateModelCards();
+  state.isMember = isMember;
+}
+
+function updateModelCards(){
+  const rsBadge = document.getElementById('rs-badge');
+  const hrBadge = document.getElementById('hr-badge');
+  const rsSub   = document.getElementById('rs-sub');
+  const hrSub   = document.getElementById('hr-sub');
+  const bannerSub = document.getElementById('mem-banner-sub');
+
+  if(isMember){
+    rsBadge.textContent = '✓ Deposit waived — Member benefit';
+    rsBadge.className = 'rc-badge mem';
+    rsSub.textContent = 'Our House takes 60% up to a cap. No deposit required — member benefit.';
+    hrBadge.textContent = '✓ 20% discount applied — Member rate';
+    hrBadge.className = 'rc-badge mem';
+    hrSub.textContent = 'Flat room rate at 20% off standard pricing. Keep 100% of ticket sales above the room cost.';
+    bannerSub.textContent = 'Revenue Share deposit waived · Hourly rate 20% off';
+  } else {
+    rsBadge.textContent = 'Non-Member · 30% deposit required';
+    rsBadge.className = 'rc-badge rs';
+    rsSub.textContent = 'Our House takes 60% up to a cap. 30% of house cap deposit required upfront.';
+    hrBadge.textContent = 'Non-Member · 50% deposit required';
+    hrBadge.className = 'rc-badge hr';
+    hrSub.textContent = 'Flat room rate. Keep 100% of ticket sales above the room cost. 50% deposit to confirm.';
+  }
+
+  // Re-derive the combined model string if a card is selected
+  if(selectedModelCard) buildModelValue();
+}
+
+function pickModelCard(card, el){
+  document.querySelectorAll('#model-cards .rc').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedModelCard = card;
+  buildModelValue();
+}
+
+function buildModelValue(){
+  if(!selectedModelCard) return;
+  const modelMap = {
+    rs: isMember ? 'Revenue Share — Member' : 'Revenue Share — Non-Member',
+    hr: isMember ? 'Standard Hourly — Member' : 'Standard Hourly'
+  };
+  const val = modelMap[selectedModelCard];
+  state.model = val;
+  document.getElementById('f-model').value = val;
+}
+
+function pickModel(val, el){
+  // legacy shim — unused but kept for safety
+}
+
+function updateAttendanceCap(){
+  const cap = ROOM_CAPS[state.room];
+  const input = document.getElementById('f-attendance');
+  const hint  = document.getElementById('att-hint');
+  if(cap){
+    input.max = cap;
+    hint.textContent = 'Max ' + cap + ' guests for ' + state.room + '.';
+    // Clamp existing value
+    if(input.value && parseInt(input.value) > cap){
+      input.value = cap;
+    }
+  } else {
+    input.removeAttribute('max');
+    hint.textContent = 'Select a room first to set the capacity limit.';
+  }
+}
+
+// ── Deposit + cost calculator ──────────────────────────────────
+function calcFinancials(){
+  const HOURLY = { 'Creative Suite': 60, 'The Loft': 80, 'Full House': 150 };
+  const CAPS   = { 'Creative Suite': 20, 'The Loft': 30, 'Full House': 60  };
+
+  const roomRate    = HOURLY[state.room] || 0;
+  const roomCap     = CAPS[state.room]   || 0;
+  const ticketPrice = parseFloat(state.price)    || 0;
+  const extraSetup  = parseFloat(state.setup)    || 0;
+  const extraBkdn   = parseFloat(state.bkdn)     || 0;
+
+  // Event duration from start/end times
+  let eventHrs = 0;
+  if(state.start && state.end){
+    const [sh,sm] = state.start.split(':').map(Number);
+    const [eh,em] = state.end.split(':').map(Number);
+    eventHrs = Math.max(0, (eh*60+em - sh*60-sm) / 60);
+  }
+  // Billable = event hours only + any EXTRA setup/bkdn beyond the free 30 min each
+  const billableHrs = eventHrs + extraSetup + extraBkdn;
+
+  let deposit = 0, totalCost = 0, houseCap = 0, note = '';
+
+  const attendance = parseInt(state.attendance) || 0;
+
+  if(selectedModelCard === 'rs'){
+    // House cap = standard hourly room fee (rate x billable hrs) + 20% admin fee
+    const standardHourly = roomRate * billableHrs;
+    houseCap = Math.round(standardHourly * 1.20); // full room cost + 20% admin fee
+    if(isMember){
+      deposit = 0;
+    } else {
+      deposit = Math.round(houseCap * 0.30);
+    }
+    totalCost = houseCap;
+    note = "Deposit is applied toward Our House's 60% share at payout. Non-refundable if ticket sales don't cover it.";
+  } else if(selectedModelCard === 'hr'){
+    // Members get 20% discount on room rate
+    const effectiveRate = isMember ? roomRate * 0.80 : roomRate;
+    totalCost = Math.round(effectiveRate * billableHrs);
+    // Both members and non-members pay 50% deposit
+    deposit   = Math.round(totalCost * 0.50);
+    note = 'Remaining 50% due 24 hrs before your event. You keep 100% of ticket sales above the total room cost.';
+  }
+
+  return { deposit, totalCost, houseCap, billableHrs, eventHrs, roomRate, ticketPrice, roomCap, attendance, note };
+}
+
+// ── Review ─────────────────────────────────────────────────────
+function buildReview(){
+  saveStep(5);
+  const fmt = (v,fallback='—') => v||`<span class="rv-val empty">${fallback}</span>`;
+  const fmtDate = d => { if(!d) return '—'; const [y,m,day]=d.split('-'); return `${m}/${day}/${y}`; };
+  const fmtTime = t => { if(!t) return '—'; const [h,m]=t.split(':'); const ampm=h>=12?'PM':'AM'; return `${h>12?h-12:h||12}:${m} ${ampm}`; };
+  const fmtMoney = n => n === 0 ? '$0' : '$' + n.toLocaleString();
+
+  const fin = calcFinancials();
+  const hasFinancials = !!(selectedModelCard && state.room);
+
+  let financialCard = '';
+  if(hasFinancials){
+    const effectiveRate = isMember ? Math.round(fin.roomRate * 0.80) : fin.roomRate;
+
+    const rsCard = `
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Deposit Due</div>
+        <div class="fin-metric-val ${fin.deposit === 0 ? 'fin-waived' : ''}">${fin.deposit === 0 ? 'Waived ★' : fmtMoney(fin.deposit)}</div>
+        <div class="fin-metric-sub">${fin.deposit === 0 ? 'Member benefit — no deposit required' : '30% of house revenue cap'}</div>
+      </div>
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Our House — 60% Cap</div>
+        <div class="fin-metric-val">${fmtMoney(fin.houseCap)}</div>
+        <div class="fin-metric-sub">(${fin.billableHrs.toFixed(1)} hrs × $${fin.roomRate}/hr) + 20% admin fee</div>
+      </div>
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Your Est. Take — 40%</div>
+        <div class="fin-metric-val fin-good">${fmtMoney(Math.round(fin.attendance * fin.ticketPrice * 0.40))}</div>
+        <div class="fin-metric-sub">${fin.attendance} tickets × $${fin.ticketPrice} × 40%</div>
+      </div>`;
+
+    const hrCard = `
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Total Room Fee</div>
+        <div class="fin-metric-val">${fmtMoney(fin.totalCost)}</div>
+        <div class="fin-metric-sub">${fin.billableHrs.toFixed(1)} hrs × $${effectiveRate}/hr${isMember ? ' (member rate)' : ''}</div>
+      </div>
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Deposit Due</div>
+        <div class="fin-metric-val">${fmtMoney(fin.deposit)}</div>
+        <div class="fin-metric-sub">50% due within 48 hrs of acceptance</div>
+      </div>
+      <div class="fin-metric">
+        <div class="fin-metric-lbl">Remaining Balance</div>
+        <div class="fin-metric-val">${fmtMoney(fin.totalCost - fin.deposit)}</div>
+        <div class="fin-metric-sub">Due 24 hrs before your event</div>
+      </div>`;
+
+    financialCard = `
+    <div class="fin-summary">
+      <div class="fin-summary-hd">
+        <span class="fin-summary-icon">💰</span>
+        <div>
+          <div class="fin-summary-title">Estimated Costs</div>
+          <div class="fin-summary-sub">Be ready to satisfy your deposit within 48 hrs of acceptance. Final amounts confirmed in your booking agreement.</div>
+        </div>
+      </div>
+      <div class="fin-summary-grid">
+        ${selectedModelCard === 'rs' ? rsCard : hrCard}
+      </div>
+      <div class="fin-note">${fin.note}</div>
+    </div>`;
+  }
+
+  document.getElementById('review-content').innerHTML = financialCard + `
+    <div class="review-grid">
+      <div class="rv-block">
+        <div class="rv-lbl">Name <a class="review-edit" onclick="goTo(1)">Edit</a></div>
+        <div class="rv-val">${fmt(state.name)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Email</div>
+        <div class="rv-val">${fmt(state.email)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Phone</div>
+        <div class="rv-val">${fmt(state.phone)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Instagram</div>
+        <div class="rv-val">${fmt(state.ig,'Not provided')}</div>
+      </div>
+    </div>
+
+    <div class="review-grid" style="grid-template-columns:1fr;">
+      <div class="rv-block">
+        <div class="rv-lbl">Event Name <a class="review-edit" onclick="goTo(2)">Edit</a></div>
+        <div class="rv-val">${fmt(state.eventName)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Concept</div>
+        <div class="rv-val" style="font-size:11px;line-height:1.6;">${fmt(state.concept)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Event Type</div>
+        <div class="rv-val">${fmt(state.type)}</div>
+      </div>
+    </div>
+
+    <div class="review-grid">
+      <div class="rv-block">
+        <div class="rv-lbl">Room <a class="review-edit" onclick="goTo(3)">Edit</a></div>
+        <div class="rv-val">${fmt(state.room)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Date</div>
+        <div class="rv-val">${fmtDate(state.date)}${state.date2?' · Alt: '+fmtDate(state.date2):''}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Time</div>
+        <div class="rv-val">${fmtTime(state.start)} – ${fmtTime(state.end)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Setup / Breakdown</div>
+        <div class="rv-val">30 min setup included free${state.setup&&state.setup!='0'?' + '+state.setup+' hr extra':''} · 30 min breakdown included free${state.bkdn&&state.bkdn!='0'?' + '+state.bkdn+' hr extra':''}</div>
+      </div>
+    </div>
+
+    <div class="review-grid">
+      <div class="rv-block">
+        <div class="rv-lbl">Booking Model <a class="review-edit" onclick="goTo(4)">Edit</a></div>
+        <div class="rv-val">${fmt(state.model)}${isMember?' <span style="color:var(--amber);font-size:10px;">★ Member</span>':''}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Expected Attendance</div>
+        <div class="rv-val">${fmt(state.attendance)}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">Ticket Price</div>
+        <div class="rv-val">${state.price?'$'+state.price:'—'}</div>
+      </div>
+      <div class="rv-block">
+        <div class="rv-lbl">How You Heard About Us</div>
+        <div class="rv-val">${fmt(state.source,'Not provided')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Submit ─────────────────────────────────────────────────────
+async function submitForm(){
+  saveStep(5);
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  // Build payload
+  const payload = {
+    // Contact
+    name:       state.name,
+    email:      state.email,
+    phone:      state.phone,
+    instagram:  state.ig,
+    // Event
+    event_name: state.eventName,
+    concept:    state.concept,
+    event_type: state.type,
+    // Space
+    room:       state.room,
+    date:       state.date,
+    date_alt:   state.date2,
+    time_start: state.start,
+    time_end:   state.end,
+    setup_hrs:  state.setup||'0',
+    bkdn_hrs:   state.bkdn||'0',
+    // Numbers
+    is_member:     isMember ? 'Yes' : 'No',
+    booking_model: state.model,
+    attendance: state.attendance,
+    ticket_price: state.price,
+    // Background
+    experience: state.experience,
+    website:    state.website,
+    links:      state.links,
+    promo_plan: state.promo,
+    source:     state.source,
+    notes:      state.notes,
+    // Meta
+    submitted_at: new Date().toISOString(),
+    form_version: 'our-house-v1'
+  };
+
+  try {
+    // ── MAKE.COM WEBHOOK — replace URL below with your Make webhook URL ──
+    const MAKE_WEBHOOK = 'YOUR_MAKE_WEBHOOK_URL_HERE';
+
+    if(MAKE_WEBHOOK !== 'YOUR_MAKE_WEBHOOK_URL_HERE'){
+      const res = await fetch(MAKE_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok) throw new Error('Webhook error: '+res.status);
+    } else {
+      // Dev mode — log to console
+      console.log('FORM SUBMISSION (webhook not configured):', payload);
+      await new Promise(r => setTimeout(r, 800)); // simulate delay
+    }
+
+    showSuccess();
+
+  } catch(err) {
+    console.error('Submit error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Submit Event Request →';
+    alert('Something went wrong. Please email info@ourhouse48th.com directly.');
+  }
+}
+
+function showSuccess(){
+  document.getElementById('progress-bar').style.display = 'none';
+  for(let i=1;i<=6;i++) document.getElementById('sec-'+i).style.display='none';
+  const wrap = document.getElementById('success-wrap');
+  wrap.classList.add('show');
+  const name = state.name.split(' ')[0];
+  if(name){
+    document.getElementById('success-title').textContent = `You're in, ${name}.`;
+    document.getElementById('success-sub').textContent =
+      `We received your request and will respond within 48 hours at ${state.email}. Check your inbox for a confirmation.`;
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Input error clearing ───────────────────────────────────────
+document.querySelectorAll('.fi,.fs,.ft').forEach(el => {
+  el.addEventListener('input', () => el.classList.remove('err'));
+});
+</script>
+</body>
+</html>
