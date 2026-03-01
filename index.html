@@ -1191,63 +1191,425 @@ function buildReview(){
 }
 
 // ── Submit ─────────────────────────────────────────────────────
+// ── PDF generation helpers ────────────────────────────────────────
+function calcBreakdown(){
+  const HOURLY = { "Creative Suite": 60, "The Loft": 80, "Full House": 150 };
+  const roomRate    = HOURLY[state.room] || 0;
+  const ticketPrice = parseFloat(state.price) || 0;
+  const attendance  = parseInt(state.attendance) || 0;
+  const extraSetup  = parseFloat(state.setup) || 0;
+  const extraBkdn   = parseFloat(state.bkdn)  || 0;
+
+  let eventHrs = 0;
+  if(state.start && state.end){
+    const [sh,sm] = state.start.split(':').map(Number);
+    const [eh,em] = state.end.split(':').map(Number);
+    eventHrs = Math.max(0, (eh*60+em - sh*60-sm) / 60);
+  }
+  const billableHrs = eventHrs + extraSetup + extraBkdn;
+  const isRS = selectedModelCard === 'rs';
+
+  let houseCap=0, deposit=0, yourTake=0, totalRoomFee=0, remaining=0, breakeven=0;
+
+  if(isRS){
+    const standardHourly = roomRate * billableHrs;
+    houseCap  = Math.round(standardHourly * 1.20);
+    deposit   = isMember ? 0 : Math.round(houseCap * 0.30);
+    yourTake  = Math.round(attendance * ticketPrice * 0.40);
+    breakeven = deposit > 0 ? Math.ceil(deposit / (ticketPrice * 0.40)) : 0;
+  } else {
+    const effectiveRate = isMember ? roomRate * 0.80 : roomRate;
+    totalRoomFee = Math.round(effectiveRate * billableHrs);
+    deposit      = Math.round(totalRoomFee * 0.50);
+    remaining    = totalRoomFee - deposit;
+    breakeven    = ticketPrice > 0 ? Math.ceil(totalRoomFee / ticketPrice) : 0;
+  }
+
+  const fmtTime = t => {
+    if(!t) return '';
+    const [h,m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    return `${h > 12 ? h-12 : (h||12)}:${String(m).padStart(2,'0')} ${ampm}`;
+  };
+  const fmtDate = d => {
+    if(!d) return '';
+    const [y,mo,day] = d.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${months[parseInt(mo)-1]} ${parseInt(day)}, ${y}`;
+  };
+
+  return {
+    name:         state.name,
+    email:        state.email,
+    eventName:    state.eventName,
+    eventType:    state.type,
+    room:         state.room,
+    date:         fmtDate(state.date),
+    start:        fmtTime(state.start),
+    end:          fmtTime(state.end),
+    hours:        billableHrs,
+    model:        state.model,
+    isMember,
+    isRS,
+    attendance,
+    ticketPrice,
+    roomRate,
+    houseCap,
+    deposit,
+    yourTake,
+    totalRoomFee,
+    remaining,
+    breakeven,
+    concept:      state.concept,
+    promoP:       state.promo,
+  };
+}
+
+function generateBreakdownPDF(bd){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"portrait", unit:"pt", format:"letter" });
+  const PW=612, PH=792;
+  const FOREST=[12,55,34], ORANGE=[228,97,20], AMBER=[220,149,27];
+  const CREAM=[245,244,239], CREAM_D=[228,226,219], INK=[28,28,26], MUTED=[107,117,101];
+  const WHITE=[255,255,255], WARN=[192,57,43], GRN=[46,125,82], GRN_L=[238,246,241];
+  const AMBER_L=[253,246,227];
+  let page=1;
+
+  const rgb  = c => doc.setTextColor(c[0],c[1],c[2]);
+  const fill = c => doc.setFillColor(c[0],c[1],c[2]);
+  const drw  = c => doc.setDrawColor(c[0],c[1],c[2]);
+  const mon  = n => n===0 ? "$0" : "$"+n.toLocaleString();
+
+  function chrome(){
+    fill(CREAM); doc.rect(0,0,PW,PH,"F");
+    fill(FOREST); doc.rect(0,0,PW,76,"F");
+    fill(ORANGE); doc.rect(0,76,PW,2.5,"F");
+    rgb([122,170,136]); doc.setFont("helvetica","bold"); doc.setFontSize(8);
+    doc.text("OUR HOUSE  \xB7  POWEREDBYMUSE", 36, 28);
+    doc.setFont("helvetica","normal"); doc.setFontSize(7);
+    doc.text("South LA Creative Community Infrastructure", 36, 42);
+    doc.text("Event Profit Breakdown", 36, 56);
+    doc.text("ourhouse48th.com", PW-36, 28, {align:"right"});
+    doc.text("info@ourhouse48th.com", PW-36, 42, {align:"right"});
+    fill(ORANGE); doc.rect(0,78.5,3.5,PH-112,"F");
+    fill(CREAM_D); doc.rect(0,PH-32,PW,32,"F");
+    fill(ORANGE);  doc.rect(0,PH-32,PW,1.5,"F");
+    rgb(MUTED); doc.setFont("helvetica","normal"); doc.setFontSize(6.5);
+    doc.text("Our House  \xB7  POWEREDBYMUSE  \xB7  info@ourhouse48th.com  \xB7  South LA", 36, PH-11);
+    doc.text("Page "+page, PW-36, PH-11, {align:"right"});
+  }
+
+  function secHdr(y, num, title){
+    fill(CREAM_D); doc.rect(18,y,PW-36,22,"F");
+    fill(ORANGE);  doc.rect(18,y,1.5,22,"F");
+    rgb(ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+    doc.text(num, 26, y+14.5);
+    rgb(FOREST); doc.setFontSize(8);
+    doc.text(title.toUpperCase(), 52, y+14.5);
+    return y+30;
+  }
+
+  function np(y, need){ if(y+need>PH-44){ doc.addPage(); page++; chrome(); return 102; } return y; }
+
+  // KV table helper
+  function kvTbl(y, rows){
+    const cw1=130, cw2=PW-36-cw1, rh=24;
+    rows.forEach((row,ri)=>{
+      fill(ri%2===0?WHITE:CREAM); doc.rect(18,y,PW-36,rh,"F");
+      rgb(FOREST); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+      doc.text(row[0], 26, y+15.5);
+      rgb(INK); doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+      const vLines = doc.splitTextToSize(row[1], cw2-16);
+      doc.text(vLines, 26+cw1, y+15.5);
+      y += vLines.length > 1 ? rh+(vLines.length-1)*12 : rh;
+    });
+    drw(CREAM_D); doc.setLineWidth(0.5);
+    doc.rect(18, y-rows.reduce((a,r)=>{ const l=doc.splitTextToSize(r[1],cw2-16).length; return a+(l>1?rh+(l-1)*12:rh); },0), PW-36, rows.reduce((a,r)=>{ const l=doc.splitTextToSize(r[1],cw2-16).length; return a+(l>1?rh+(l-1)*12:rh); },0), "S");
+    return y+8;
+  }
+
+  // Metric card (3-up)
+  function metricCard(doc, x, y, w, h, label, value, sub, valColor){
+    fill(CREAM_D); doc.rect(x,y,w,h,"F");
+    rgb(MUTED); doc.setFont("helvetica","bold"); doc.setFontSize(6.5);
+    doc.text(label.toUpperCase(), x+12, y+14);
+    const vc = valColor||INK;
+    rgb(vc); doc.setFont("helvetica","bold"); doc.setFontSize(20);
+    doc.text(value, x+12, y+38);
+    rgb(MUTED); doc.setFont("helvetica","normal"); doc.setFontSize(7.5);
+    const sl = doc.splitTextToSize(sub, w-20);
+    doc.text(sl, x+12, y+52);
+  }
+
+  // Schedule table
+  function schedTbl(y, rows){
+    const cols=[140,100,PW-36-240], rh=26;
+    // Header
+    fill(FOREST); doc.rect(18,y,PW-36,rh,"F");
+    rgb(WHITE); doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+    doc.text("WHEN", 26, y+17);
+    doc.text("AMOUNT", 26+cols[0], y+17);
+    doc.text("NOTES", 26+cols[0]+cols[1], y+17);
+    y+=rh;
+    rows.forEach((row,ri)=>{
+      fill(ri%2===0?WHITE:CREAM); doc.rect(18,y,PW-36,rh,"F");
+      rgb(FOREST); doc.setFont("helvetica","bold"); doc.setFontSize(8.5);
+      doc.text(row[0], 26, y+17);
+      const isGreen = row[1].includes("100%") || row[1]==="Waived";
+      rgb(isGreen?GRN:ORANGE); doc.setFont("helvetica","bold"); doc.setFontSize(9);
+      doc.text(row[1], 26+cols[0], y+17);
+      rgb(INK); doc.setFont("helvetica","normal"); doc.setFontSize(8);
+      const nl=doc.splitTextToSize(row[2],cols[2]-12);
+      doc.text(nl, 26+cols[0]+cols[1], y+17);
+      y+=rh;
+    });
+    drw(CREAM_D); doc.setLineWidth(0.5); doc.rect(18,y-rh*rows.length-rh,PW-36,rh*(rows.length+1),"S");
+    return y+8;
+  }
+
+  // P&L table
+  function plTbl(y, rows){
+    const cols=[200,90,PW-36-290], rh=26;
+    fill(FOREST); doc.rect(18,y,PW-36,rh,"F");
+    rgb(WHITE); doc.setFont("helvetica","bold"); doc.setFontSize(7.5);
+    doc.text("LINE ITEM", 26, y+17);
+    doc.text("AMOUNT", 26+cols[0], y+17);
+    doc.text("NOTES", 26+cols[0]+cols[1], y+17);
+    y+=rh;
+    rows.forEach((row,ri)=>{
+      const isNet = row[0].includes("Net Take");
+      fill(isNet?GRN_L:(ri%2===0?WHITE:CREAM)); doc.rect(18,y,PW-36,rh,"F");
+      rgb(isNet?GRN:FOREST); doc.setFont("helvetica",isNet?"bold":"bold"); doc.setFontSize(8.5);
+      doc.text(row[0], 26, y+17);
+      const isMinus = row[1].startsWith("-");
+      rgb(isNet?GRN:isMinus?WARN:INK); doc.setFont("helvetica",isNet?"bold":"normal"); doc.setFontSize(8.5);
+      doc.text(row[1], 26+cols[0], y+17);
+      rgb(MUTED); doc.setFont("helvetica","normal"); doc.setFontSize(7.5);
+      const nl=doc.splitTextToSize(row[2],cols[2]-12); doc.text(nl,26+cols[0]+cols[1],y+17);
+      y+=rh;
+    });
+    drw(CREAM_D); doc.setLineWidth(0.5); doc.rect(18,y-rh*rows.length-rh,PW-36,rh*(rows.length+1),"S");
+    return y+8;
+  }
+
+  // ── BUILD CONTENT ──────────────────────────────────────────────
+  chrome();
+  let y=102;
+
+  // Title
+  rgb(FOREST); doc.setFont("helvetica","bold"); doc.setFontSize(22);
+  doc.text("Event Profit Breakdown", 18, y); y+=28;
+  rgb(MUTED); doc.setFont("helvetica","italic"); doc.setFontSize(10);
+  doc.text("Prepared for "+bd.name, 18, y); y+=14;
+  rgb(MUTED); doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+  doc.text(bd.eventName+"  \xB7  "+bd.eventType+"  \xB7  "+bd.room+"  \xB7  "+bd.date, 18, y); y+=10;
+  fill(ORANGE); doc.rect(18,y,PW-36,2,"F"); y+=12;
+
+  // 01 Booking Summary
+  y=np(y,80); y=secHdr(y,"01 /","Your Booking Summary");
+  const summaryRows = [
+    ["Booking Model",  bd.model],
+    ["Room",           bd.room+" \xB7 $"+bd.roomRate+"/hr"],
+    ["Event Date",     bd.date],
+    ["Event Time",     bd.start+" \u2013 "+bd.end],
+    ["Billable Hours", bd.hours.toFixed(1)+" hrs"],
+    ["Membership",     bd.isMember ? "Member \u2014 benefits applied" : "Non-Member"],
+  ];
+  y=kvTbl(y, summaryRows);
+
+  // 02 Numbers at a Glance — 3 metric cards
+  y=np(y,100); y=secHdr(y,"02 /","Your Numbers at a Glance");
+  const cw=(PW-36)/3, ch=72, cx=18;
+  if(bd.isRS){
+    metricCard(doc, cx,      y, cw-3, ch, "Deposit Due",
+      bd.isMember?"Waived":mon(bd.deposit),
+      bd.isMember?"Member benefit \u2014 no deposit required":"30% of house cap \xB7 due within 48 hrs",
+      bd.isMember?GRN:ORANGE);
+    metricCard(doc, cx+cw,   y, cw-3, ch, "Our House Cap",
+      mon(bd.houseCap),
+      "Room fee \xD7 1.20 admin  ("+bd.hours.toFixed(1)+" hrs \xD7 $"+bd.roomRate+"/hr)",
+      FOREST);
+    metricCard(doc, cx+cw*2, y, cw-3, ch, "Your Est. Take",
+      mon(bd.yourTake),
+      bd.attendance+" tickets \xD7 $"+bd.ticketPrice+" \xD7 40%",
+      GRN);
+  } else {
+    const effRate = bd.isMember ? Math.round(bd.roomRate*0.80) : bd.roomRate;
+    metricCard(doc, cx,      y, cw-3, ch, "Total Room Fee",
+      mon(bd.totalRoomFee),
+      bd.hours.toFixed(1)+" hrs \xD7 $"+effRate+"/hr"+(bd.isMember?" (member rate)":""),
+      FOREST);
+    metricCard(doc, cx+cw,   y, cw-3, ch, "Deposit Due",
+      mon(bd.deposit),
+      "50% \xB7 due within 48 hrs of acceptance",
+      ORANGE);
+    metricCard(doc, cx+cw*2, y, cw-3, ch, "Remaining Balance",
+      mon(bd.remaining),
+      "Due 24 hrs before your event",
+      INK);
+  }
+  y+=ch+10;
+
+  // 03 Full P&L Projection
+  y=np(y,160); y=secHdr(y,"03 /","Full P&L Projection");
+  const gross = bd.attendance * bd.ticketPrice;
+  let plRows;
+  if(bd.isRS){
+    plRows=[
+      ["Gross Ticket Revenue",      mon(gross),              bd.attendance+" tickets \xD7 $"+bd.ticketPrice],
+      ["Our House Cap (60%)",        mon(bd.houseCap),        "Room fee \xD7 hrs \xD7 1.20 admin"],
+      ["Your Gross Take (40%)",      mon(bd.yourTake),        "40% of gross ticket revenue"],
+      ["Less: Deposit",              bd.isMember?"Waived":"-"+mon(bd.deposit), "Applied at payout \xB7 non-refundable"],
+      ["Your Net Take-Home",         mon(bd.yourTake-bd.deposit), "After deposit settled"],
+      ["Breakeven",                  bd.breakeven+" tickets", "Tickets to cover deposit"],
+    ];
+  } else {
+    const effRate = bd.isMember ? Math.round(bd.roomRate*0.80) : bd.roomRate;
+    plRows=[
+      ["Gross Ticket Revenue",  mon(gross),              bd.attendance+" tickets \xD7 $"+bd.ticketPrice],
+      ["Total Room Fee",        "-"+mon(bd.totalRoomFee), bd.hours.toFixed(1)+" hrs \xD7 $"+effRate+"/hr"],
+      ["Your Net Take-Home",    mon(gross-bd.totalRoomFee),"Ticket revenue above room cost \u2014 100% yours"],
+      ["Deposit (50%)",         mon(bd.deposit),         "Due within 48 hrs of acceptance"],
+      ["Remaining Balance",     mon(bd.remaining),       "Due 24 hrs before event"],
+      ["Breakeven",             bd.breakeven+" tickets", "Tickets to cover full room fee"],
+    ];
+  }
+  y=plTbl(y, plRows);
+
+  // 04 Payment Schedule
+  y=np(y,120); y=secHdr(y,"04 /","Deposit + Payment Schedule");
+  let schedRows;
+  if(bd.isRS){
+    schedRows=[
+      ["At acceptance (within 48 hrs)", bd.isMember?"Waived":mon(bd.deposit), "Zelle, Cash App, or Venmo"],
+      ["After the event (5\u20137 days)", "Payout processed", "40% of ticket sales, deposit applied"],
+    ];
+  } else {
+    schedRows=[
+      ["At acceptance (within 48 hrs)", mon(bd.deposit),   "50% deposit \xB7 Zelle, Cash App, or Venmo"],
+      ["24 hrs before event",           mon(bd.remaining), "Remaining 50% of room fee"],
+      ["After event",                   "Keep 100%",       "All ticket revenue is yours directly"],
+    ];
+  }
+  y=schedTbl(y, schedRows);
+
+  // 05 Next Steps
+  y=np(y,100); y=secHdr(y,"05 /","What Happens Next");
+  y=kvTbl(y,[
+    ["Submit request",        "poweredbymuse.github.io/ourhouseeventrequest"],
+    ["We review",             "Within 48 hrs \u2014 we\u2019ll reach out if anything\u2019s missing."],
+    ["Deposit invoice sent",  "Pay within 48 hrs to hold your date."],
+    ["2\u20133 weeks out",    "Final collaborator briefs due. Guest list 24 hrs before."],
+    ["After the event",       bd.isRS?"RS payouts processed 5\u20137 business days.":"All ticket revenue is yours \u2014 no processing delay."],
+  ]);
+
+  // Footer callout
+  y=np(y,60); y+=8;
+  fill([238,244,240]); doc.rect(18,y,PW-36,42,"F");
+  fill(FOREST); doc.rect(18,y,3,42,"F");
+  rgb(INK); doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+  const footerT="This breakdown is based on your submitted numbers. Final amounts confirmed in your booking agreement. Questions? Email info@ourhouse48th.com";
+  const fl=doc.splitTextToSize(footerT,PW-56); doc.text(fl,28,y+14);
+
+  return doc.output("datauristring").split(",")[1]; // return base64
+}
+
+// ── Submit ────────────────────────────────────────────────────────
 async function submitForm(){
   saveStep(5);
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = 'Preparing your breakdown\u2026';
 
-  // Build payload
-  const payload = {
-    // Contact
-    name:       state.name,
-    email:      state.email,
-    phone:      state.phone,
-    instagram:  state.ig,
-    // Event
-    event_name: state.eventName,
-    concept:    state.concept,
-    event_type: state.type,
-    // Space
-    room:       state.room,
-    date:       state.date,
-    date_alt:   state.date2,
-    time_start: state.start,
-    time_end:   state.end,
-    setup_hrs:  state.setup||'0',
-    bkdn_hrs:   state.bkdn||'0',
-    // Numbers
-    is_member:     isMember ? 'Yes' : 'No',
-    booking_model: state.model,
-    attendance: state.attendance,
-    ticket_price: state.price,
-    // Background
-    experience: state.experience,
-    website:    state.website,
-    links:      state.links,
-    promo_plan: state.promo,
-    source:     state.source,
-    notes:      state.notes,
-    // Meta
-    submitted_at: new Date().toISOString(),
-    form_version: 'our-house-v1'
-  };
+  // ── MAKE.COM WEBHOOK — paste your Make webhook URL here ──
+  const MAKE_WEBHOOK = 'YOUR_MAKE_WEBHOOK_URL_HERE';
 
   try {
-    // ── MAKE.COM WEBHOOK — replace URL below with your Make webhook URL ──
-    const MAKE_WEBHOOK = 'YOUR_MAKE_WEBHOOK_URL_HERE';
+    // Step 1: Load jsPDF if not already loaded
+    if(!window.jspdf){
+      await new Promise((res,rej)=>{
+        const s=document.createElement("script");
+        s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+        s.onload=res; s.onerror=rej;
+        document.head.appendChild(s);
+      });
+    }
 
+    btn.textContent = 'Generating PDF\u2026';
+
+    // Step 2: Calculate financials + generate PDF
+    const bd      = calcBreakdown();
+    const pdfB64  = generateBreakdownPDF(bd);
+    const pdfName = (state.name.replace(/[^a-z0-9]/gi,"_")+"_OurHouse_Breakdown.pdf");
+
+    btn.textContent = 'Submitting\u2026';
+
+    // Step 3: Build full payload with PDF attached as base64
+    const payload = {
+      // Contact
+      name:          state.name,
+      email:         state.email,
+      phone:         state.phone,
+      instagram:     state.ig,
+      // Event
+      event_name:    state.eventName,
+      concept:       state.concept,
+      event_type:    state.type,
+      // Space
+      room:          state.room,
+      date:          state.date,
+      date_alt:      state.date2,
+      time_start:    state.start,
+      time_end:      state.end,
+      setup_hrs:     state.setup||"0",
+      bkdn_hrs:      state.bkdn||"0",
+      // Numbers
+      is_member:     isMember ? "Yes" : "No",
+      booking_model: state.model,
+      attendance:    state.attendance,
+      ticket_price:  state.price,
+      // Financials (pre-calculated for Make)
+      deposit_due:   bd.deposit,
+      house_cap:     bd.houseCap,
+      your_take:     bd.yourTake,
+      total_room_fee:bd.totalRoomFee,
+      remaining_bal: bd.remaining,
+      breakeven:     bd.breakeven,
+      billable_hrs:  bd.hours,
+      // Background
+      experience:    state.experience,
+      website:       state.website,
+      links:         state.links,
+      promo_plan:    state.promo,
+      source:        state.source,
+      notes:         state.notes,
+      // PDF attachment
+      pdf_base64:    pdfB64,
+      pdf_filename:  pdfName,
+      // Meta
+      submitted_at:  new Date().toISOString(),
+      form_version:  "our-house-v2"
+    };
+
+    // Step 4: POST to Make.com
     if(MAKE_WEBHOOK !== 'YOUR_MAKE_WEBHOOK_URL_HERE'){
       const res = await fetch(MAKE_WEBHOOK, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body:    JSON.stringify(payload)
       });
       if(!res.ok) throw new Error('Webhook error: '+res.status);
     } else {
-      // Dev mode — log to console
-      console.log('FORM SUBMISSION (webhook not configured):', payload);
-      await new Promise(r => setTimeout(r, 800)); // simulate delay
+      // Dev mode — log to console, auto-download the PDF locally
+      console.log('DEV MODE — payload (pdf_base64 truncated):', {
+        ...payload, pdf_base64: pdfB64.slice(0,80)+'…'
+      });
+      // Trigger local download so you can preview the PDF
+      const link = document.createElement('a');
+      link.href = 'data:application/pdf;base64,'+pdfB64;
+      link.download = pdfName;
+      link.click();
+      await new Promise(r => setTimeout(r, 800));
     }
 
     showSuccess();
@@ -1255,7 +1617,7 @@ async function submitForm(){
   } catch(err) {
     console.error('Submit error:', err);
     btn.disabled = false;
-    btn.textContent = 'Submit Event Request →';
+    btn.textContent = 'Submit Event Request \u2192';
     alert('Something went wrong. Please email info@ourhouse48th.com directly.');
   }
 }
