@@ -772,13 +772,13 @@
   <!-- SUCCESS -->
   <div class="success-msg" id="successMsg">
     <h2>You're in the mix 🌿</h2>
-    <p>Your vendor application has been submitted.<br>We'll be in touch within 3–5 business days.<br><br>Follow us on Instagram for updates: <strong>@andthatsok</strong></p>
+    <p>Your vendor application has been submitted.<br>We'll be in touch within 3–5 business days.<br><br>Follow us on Instagram for updates: <strong><a href="https://www.instagram.com/andthatsok.co" target="_blank" style="color:var(--pink-light); text-decoration:none;">@andthatsok.co</a></strong></p>
   </div>
 
 </main>
 
 <footer>
-  <p>420 Fest · April 19, 2026 · West Hollywood, CA &nbsp;|&nbsp; Produced by <a href="#">And That's OK</a> &nbsp;|&nbsp; Questions? DM us on IG</p>
+  <p>420 Fest · April 19, 2026 · West Hollywood, CA &nbsp;|&nbsp; Produced by: <a href="https://www.instagram.com/andthatsok.co" target="_blank">And That's Ok</a> and <a href="https://instagram.com/poweredbymuse" target="_blank">POWEREDBYMUSE LLC</a></p>
 </footer>
 
 <script>
@@ -807,10 +807,11 @@ document.getElementById('vendorForm').addEventListener('submit', async function(
     console.error('Webhook error:', err);
   }
 
-  // Show success state
+  // Show success state briefly then redirect
   form.style.display = 'none';
   document.getElementById('successMsg').style.display = 'block';
   window.scrollTo({ top: document.getElementById('successMsg').offsetTop - 40, behavior: 'smooth' });
+  setTimeout(() => { window.location.href = 'https://www.andthatsokco.com/'; }, 2500);
 });
 </script>
 
