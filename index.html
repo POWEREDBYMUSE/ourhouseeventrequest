@@ -1517,9 +1517,33 @@ function generateBreakdownPDF(bd){
 // ── Submit ────────────────────────────────────────────────────────
 async function submitForm(){
   saveStep(5);
+
+  // ── Hard validation gate — catches empty submissions from any device ──
+  const required = [
+    ['f-name',       state.name,       'Please enter your name.'],
+    ['f-email',      state.email,      'Please enter your email.'],
+    ['f-event-name', state.eventName,  'Please enter your event name.'],
+    ['f-concept',    state.concept,    'Please describe your event concept.'],
+    ['f-date',       state.date,       'Please select an event date.'],
+    ['f-start',      state.start,      'Please select a start time.'],
+    ['f-end',        state.end,        'Please select an end time.'],
+  ];
+  for(const [id, val, msg] of required){
+    if(!val || !val.trim()){
+      const el = document.getElementById(id);
+      if(el) el.classList.add('err');
+      alert(msg);
+      return;
+    }
+  }
+  if(!state.room){       alert('Please select a room.');           return; }
+  if(!state.model){      alert('Please select a booking model.');  return; }
+  if(!state.attendance){ alert('Please enter an attendance estimate.'); return; }
+  if(!state.price){      alert('Please enter a ticket price.');    return; }
+
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Preparing your breakdown\u2026';
+  btn.textContent = 'Submitting\u2026';
 
   // ── MAKE.COM WEBHOOK — paste your Make webhook URL here ──
   const MAKE_WEBHOOK = 'https://hook.us2.make.com/pd3g69r0gy2hpzghycb16qywk6lfhold';
